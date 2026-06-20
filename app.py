@@ -21,7 +21,6 @@ st.info("""
 
 # Controles en la barra lateral
 st.sidebar.header("Parámetros de la Cuenca")
-# AJUSTE: Área mínima desde 0.1
 A = st.sidebar.slider("Área de la Cuenca (km²)", min_value=0.1, max_value=50.0, value=1.0, step=0.1)
 S = st.sidebar.slider("Pendiente del Cauce (%)", min_value=1.0, max_value=40.0, value=15.0, step=0.5)
 CN = st.sidebar.slider("Número de Curva (CN)", min_value=50, max_value=98, value=80, step=1)
@@ -48,10 +47,10 @@ for Tr in Tr_values:
 
 df = pd.DataFrame(data)
 
-# Visualización
-col1, col2 = st.columns([2, 1])
+# --- DISTRIBUCIÓN POR PESTAÑAS (ESTRATEGIA 1) ---
+tab1, tab2 = st.tabs(["📊 Gráfica de Caudales", "📋 Resultados de Caudal"])
 
-with col1:
+with tab1:
     st.subheader("Comparativa de Curvas de Frecuencia")
     df_melt = df.melt(id_vars=["Periodo de Retorno (Años)", "Tr_num"], 
                       value_vars=["Modelo 1 (Solo Área)", "Modelo 2 (Área + Pendiente)", "Modelo 3 (Multivariado)"],
@@ -63,8 +62,7 @@ with col1:
     fig.update_xaxes(type='category', categoryorder='array', categoryarray=[str(t) for t in Tr_values])
     st.plotly_chart(fig, use_container_width=True)
 
-with col2:
-    # AJUSTE: Título explicativo
+with tab2:
     st.subheader("Resultados de Caudal por Periodo de Retorno")
     st.write("Valores expresados en metros cúbicos por segundo (m³/s)")
-    st.dataframe(df.drop(columns=["Tr_num"]), hide_index=True)
+    st.dataframe(df.drop(columns=["Tr_num"]), hide_index=True, use_container_width=True)
