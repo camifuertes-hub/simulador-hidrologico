@@ -4,13 +4,13 @@ import pandas as pd
 import plotly.express as px
 
 # Configuración de página
-st.set_page_config(page_title="Simulador Hidrológico Aburrá", layout="wide")
+st.set_page_config(page_title="Simulador Hidrológico Medellín", layout="wide")
 
 st.title("💧 Simulador Hidrológico de Caudales Máximos")
 
 # Panel Técnico Explicativo (Fijo y limpio)
 st.markdown("""
-Esta herramienta utiliza regresiones multivariadas calibradas para el Valle de Aburrá. 
+Esta herramienta utiliza regresiones multivariadas calibradas para Medellín. 
 Seleccione los parámetros de la cuenca en la barra lateral para observar la respuesta del sistema.
 """)
 
@@ -21,8 +21,8 @@ col_m3.metric("Modelo 3", "Multivariado", "Sensible: A + S + CN")
 
 # Sidebar
 st.sidebar.header("Parámetros de entrada")
-A = st.sidebar.slider("Área de la Cuenca (km²)", 0.1, 50.0, 1.0, 0.1)
-S = st.sidebar.slider("Pendiente del Cauce (%)", 1.0, 40.0, 15.0, 0.5)
+A = st.sidebar.slider("Área de la Cuenca (km²)", 0.01, 50.0, 1.0, 0.01)
+S = st.sidebar.slider("Pendiente del Cauce (%)", 1.0, 70.0, 15.0, 0.1)
 CN = st.sidebar.slider("Número de Curva (CN)", 50, 98, 80, 1)
 
 # Lógica
