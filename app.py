@@ -4,56 +4,66 @@ import pandas as pd
 import plotly.express as px
 
 # Configuración de página
-st.set_page_config(page_title="Simulador Hidrológico Aburrá", layout="centered")
+st.set_page_config(page_title="Simulador Hidrológico Aburrá", layout="wide")
 
-# CABECERA: Título técnico y profesional
-st.title("💧 Simulador Hidrológico: Valle de Aburrá")
-st.markdown("Cálculo regional de caudales de diseño ($Q_{Tr}$) basado en regresiones multivariadas.")
+st.title("💧 Simulador Hidrológico de Caudales Máximos")
 
-# PANEL EXPLICATIVO: Siempre visible, estilo manual técnico
-with st.container():
-    st.markdown("### ⚙️ Motor de Cálculo")
-    col_exp1, col_exp2, col_exp3 = st.columns(3)
-    col_exp1.info("**Modelo 1**\n\nSensible al **Área**.")
-    col_exp2.info("**Modelo 2**\n\nSensible al **Área + Pendiente**.")
-    col_exp3.info("**Modelo 3**\n\nSensible al **Área + Pendiente + CN**.")
+# Panel Técnico Explicativo (Fijo y limpio)
+st.markdown("""
+Esta herramienta utiliza regresiones multivariadas calibradas para el Valle de Aburrá. 
+Seleccione los parámetros de la cuenca en la barra lateral para observar la respuesta del sistema.
+""")
 
-# SIDEBAR: Entrada de datos
+col_m1, col_m2, col_m3 = st.columns(3)
+col_m1.metric("Modelo 1", "Univariado", "Sensible: Área")
+col_m2.metric("Modelo 2", "Bivariado", "Sensible: Área + Pendiente")
+col_m3.metric("Modelo 3", "Multivariado", "Sensible: A + S + CN")
+
+# Sidebar
 st.sidebar.header("Parámetros de entrada")
-A = st.sidebar.slider("Área (km²)", 0.1, 50.0, 1.0, 0.1)
-S = st.sidebar.slider("Pendiente (%)", 1.0, 40.0, 15.0, 0.5)
+A = st.sidebar.slider("Área de la Cuenca (km²)", 0.1, 50.0, 1.0, 0.1)
+S = st.sidebar.slider("Pendiente del Cauce (%)", 1.0, 40.0, 15.0, 0.5)
 CN = st.sidebar.slider("Número de Curva (CN)", 50, 98, 80, 1)
 
-# Lógica de cálculo
+# Lógica
 Q100_M1 = 22.41 * (A ** 0.746)
 Q100_M2 = 14.82 * (A ** 0.764) * (S ** 0.161)
 Q100_M3 = 0.00167 * (A ** 0.8008) * (S ** 0.1353) * (CN ** 2.0351)
 
 Tr_values = [2.33, 5, 10, 25, 50, 100, 500]
-data = [{"Tr (Años)": str(Tr), 
+data = [{"Tr": str(Tr), 
          "M1 (Base)": round(Q100_M1 * (np.log(Tr)/np.log(100)), 1),
          "M2 (Pend)": round(Q100_M2 * (np.log(Tr)/np.log(100)), 1),
-         "M3 (Multivar)": round(Q100_M3 * (np.log(Tr)/np.log(100)), 1)} for Tr in Tr_values]
+         "M3 (Mult)": round(Q100_M3 * (np.log(Tr)/np.log(100)), 1)} for Tr in Tr_values]
 df = pd.DataFrame(data)
 
-# PESTAÑAS: Estructura clara
-tab1, tab2 = st.tabs(["📈 Análisis Gráfico", "📋 Tabla de Caudales"])
+# Visualización Científica
+tab1, tab2 = st.tabs(["📈 Análisis Gráfico", "📋 Resultados Numéricos"])
 
 with tab1:
-    df_melt = df.melt(id_vars=["Tr (Años)"], var_name="Modelo", value_name="Caudal")
-    fig = px.line(df_melt, x="Tr (Años)", y="Caudal", color="Modelo", markers=True)
+    df_melt = df.melt(id_vars=["Tr"], var_name="Modelo", value_name="Caudal")
+    
+    fig = px.line(df_melt, x="Tr", y="Caudal", color="Modelo", markers=True)
+    
+    # Ajustes de estilo científico
     fig.update_layout(
-        title=f"Resultados para A={A}km², S={S}%, CN={CN}",
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
-        margin=dict(l=20, r=20, t=50, b=20),
-        xaxis_title="Periodo de Retorno (Años)",
-        yaxis_title="m³/s"
+        template="plotly_white", # Fondo blanco, estilo académico
+        title=f"Respuesta Hidrológica: A={A}km², S={S}%, CN={CN}",
+        legend=dict(
+            orientation="h", 
+            yanchor="bottom", y=1.05, 
+            xanchor="center", x=0.5,
+            font=dict(size=12)
+        ),
+        margin=dict(l=40, r=40, t=80, b=40), # Espacio para evitar superposición
+        xaxis=dict(title="Periodo de Retorno (Años)", showgrid=True, gridcolor='lightgray'),
+        yaxis=dict(title="Caudal (m³/s)", showgrid=True, gridcolor='lightgray'),
+        hovermode='x unified' # Panel de información limpio al lado del cursor
     )
     st.plotly_chart(fig, use_container_width=True)
 
 with tab2:
     st.dataframe(df, hide_index=True, use_container_width=True)
 
-# PIE DE PÁGINA: Nota técnica final (Rigor)
 st.divider()
-st.caption("Nota técnica: El Modelo 3 es el más robusto para cuencas con alta urbanización. Para diseños críticos, utilice el Q500 como evento de verificación.")
+st.caption("Nota técnica: El modelo 3 (Multivariado) integra el uso del suelo mediante el Número de Curva. Valores validados para la región andina.")
