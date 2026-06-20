@@ -22,7 +22,7 @@ col_m3.metric("Modelo 3", "Multivariado", "Sensible: A + S + CN")
 # Sidebar
 st.sidebar.header("Parámetros de entrada")
 A = st.sidebar.slider("Área de la Cuenca (km²)", 0.01, 50.0, 1.0, 0.01)
-S = st.sidebar.slider("Pendiente del Cauce (%)", 1.0, 70.0, 15.0, 0.1)
+S = st.sidebar.slider("Pendiente del Cauce (%)", 1.0, 70.0, 25.0, 0.1)
 CN = st.sidebar.slider("Número de Curva (CN)", 50, 98, 80, 1)
 
 # Lógica
