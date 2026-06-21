@@ -57,6 +57,8 @@ with tab1:
 
 with tab2:
     st.dataframe(df, hide_index=True, use_container_width=True)
+st.divider()
+st.caption("Nota técnica: El modelo 3 (Multivariado) integra el uso del suelo mediante el Número de Curva. Valores validados para la región andina.")
 
 with tab3:
     st.subheader("Simulador Geométrico: Ecuación de Manning")
