@@ -57,8 +57,6 @@ with tab1:
 
 with tab2:
     st.dataframe(df, hide_index=True, use_container_width=True)
-st.divider()
-st.caption("Nota técnica: El modelo 3 (Multivariado) integra el uso del suelo mediante el Número de Curva. Valores validados para la región andina.")
 
 with tab3:
     st.subheader("Simulador Geométrico: Ecuación de Manning")
@@ -136,3 +134,6 @@ with tab3:
     Froude = Velocidad / np.sqrt(9.81 * (Area / (b + 2*z*y)))
     estado_flujo = "Subcrítico" if Froude < 1 else ("Crítico" if Froude == 1 else "Supercrítico")
     c4.metric("Régimen (Froude)", f"{Froude:.2f} ({estado_flujo})")
+
+st.divider()
+st.caption("Nota técnica: El modelo 3 (Multivariado) integra el uso del suelo mediante el Número de Curva. Valores validados para la región andina.")
