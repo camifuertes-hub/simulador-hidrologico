@@ -60,19 +60,23 @@ with tab2:
 
 with tab3:
     st.subheader("Simulador Geométrico: Ecuación de Manning")
-    st.markdown("Verificación de capacidad hidráulica asumiendo flujo uniforme en sección trapezoidal.")
+    st.markdown("Ajuste la geometría para que la **Capacidad del Canal** supere al **Caudal de Diseño**.")
     
-    # Dividimos la pantalla: Controles a la izquierda, Gráfico a la derecha
+    # Dividimos la pantalla
     col_geom, col_plot = st.columns([1, 2.5])
     
     with col_geom:
-        st.write("**Geometría del Canal**")
+        st.write("**1. Meta Hidráulica**")
+        # El valor por defecto es el M3, pero el usuario puede borrarlo e ingresar el que quiera
+        Q_ref = st.number_input("Caudal de Diseño (m³/s)", min_value=0.1, max_value=5000.0, value=float(Q100_M3), step=1.0, help="Puede usar el valor calculado o escribir su propio caudal.")
+        
+        st.write("**2. Geometría del Canal**")
         b = st.number_input("Ancho de Solera, b (m)", min_value=0.5, max_value=20.0, value=3.0, step=0.5)
-        z = st.number_input("Talud lateral, z (H:V)", min_value=0.0, max_value=3.0, value=1.0, step=0.5, help="Use 0 para canal rectangular")
+        z = st.number_input("Talud lateral, z (H:V)", min_value=0.0, max_value=3.0, value=1.0, step=0.5)
         y = st.number_input("Tirante de agua, Y (m)", min_value=0.1, max_value=10.0, value=1.5, step=0.1)
         
-        st.write("**Propiedades del Flujo**")
-        n = st.number_input("Rugosidad de Manning (n)", min_value=0.010, max_value=0.100, value=0.015, step=0.001, format="%.3f")
+        st.write("**3. Propiedades del Flujo**")
+        n = st.number_input("Rugosidad (n)", min_value=0.010, max_value=0.100, value=0.015, step=0.001, format="%.3f")
         S_m = st.number_input("Pendiente longitudinal (m/m)", min_value=0.001, max_value=0.200, value=0.010, step=0.001, format="%.3f")
 
         # Cálculos de Manning
@@ -81,38 +85,35 @@ with tab3:
         Radio_H = Area / Perimetro
         Velocidad = (1 / n) * (Radio_H ** (2/3)) * (S_m ** 0.5)
         Caudal_cap = Velocidad * Area
+        
+        # Cálculo del Borde Libre requerido normativo
+        borde_libre = max(0.3, y * 0.2)
 
     with col_plot:
-        # Generación dinámica de coordenadas para el gráfico
-        Y_max = y + 1.5  # Borde libre visual
+        Y_max = y + borde_libre + 0.5 
         
-        # Coordenadas del terreno/canal
         x_canal = [-b/2 - z*Y_max, -b/2, b/2, b/2 + z*Y_max]
         y_canal = [Y_max, 0, 0, Y_max]
         
-        # Coordenadas del polígono de agua
         x_agua = [-b/2 - z*y, -b/2, b/2, b/2 + z*y]
         y_agua = [y, 0, 0, y]
 
         fig_manning = go.Figure()
 
-        # Dibujar el agua (polígono relleno)
         fig_manning.add_trace(go.Scatter(
             x=x_agua, y=y_agua, fill='toself', mode='lines', 
             fillcolor='rgba(0, 191, 255, 0.4)', line=dict(color='blue', width=2),
             name='Lámina de Agua'
         ))
         
-        # Dibujar el cauce
         fig_manning.add_trace(go.Scatter(
             x=x_canal, y=y_canal, mode='lines', 
             line=dict(color='black', width=4), name='Perfil del Canal'
         ))
 
-        # Estilo científico
         fig_manning.update_layout(
             template="plotly_white",
-            title=f"Q = {Caudal_cap:.2f} m³/s | V = {Velocidad:.2f} m/s",
+            title=f"Geometría Transversal (Tirante ingresado: {y} m)",
             xaxis=dict(title="Ancho transversal (m)", range=[-b/2 - z*Y_max - 1, b/2 + z*Y_max + 1], scaleanchor="y", scaleratio=1),
             yaxis=dict(title="Elevación (m)", range=[-0.5, Y_max + 0.5]),
             margin=dict(l=40, r=40, t=60, b=40),
@@ -120,9 +121,16 @@ with tab3:
         )
         st.plotly_chart(fig_manning, use_container_width=True)
         
-    # Tarjetas de resultados rápidos en la parte inferior
+    st.divider()
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Área Hidráulica", f"{Area:.2f} m²")
-    c2.metric("Perímetro Mojado", f"{Perimetro:.2f} m")
-    c3.metric("Velocidad", f"{Velocidad:.2f} m/s")
-    c4.metric("Caudal de Capacidad", f"{Caudal_cap:.2f} m³/s")
+    
+    c1.metric("Caudal de Diseño (Meta)", f"{Q_ref:.2f} m³/s")
+    
+    margen = Caudal_cap - Q_ref
+    c2.metric("Capacidad del Canal", f"{Caudal_cap:.2f} m³/s", delta=f"{margen:.2f} m³/s (Margen)", delta_color="normal")
+    
+    c3.metric("Velocidad de Flujo", f"{Velocidad:.2f} m/s")
+    
+    Froude = Velocidad / np.sqrt(9.81 * (Area / (b + 2*z*y)))
+    estado_flujo = "Subcrítico" if Froude < 1 else ("Crítico" if Froude == 1 else "Supercrítico")
+    c4.metric("Régimen (Froude)", f"{Froude:.2f} ({estado_flujo})")
